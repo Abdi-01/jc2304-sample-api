@@ -8,9 +8,20 @@ const cors = require('cors');
 app.use(cors());
 app.use(express.json());
 
-app.get('/',(req,res)=>{
+app.get('/', (req, res) => {
     res.status(200).send('<h1>WELCOME TO API</h1>')
 });
 
+// ROUTING
+const usersRouter = require('./src/routers/usersRouter');
+
+app.use('/users', usersRouter);
+
+// ERROR-HANDLING
+app.use((err, req, res, next) => {
+    if (err) {
+        return res.status(500).send(err);
+    }
+})
 
 app.listen(PORT, () => console.log(`Running API ${PORT}`));
