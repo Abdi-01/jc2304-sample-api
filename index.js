@@ -4,9 +4,11 @@ const PORT = process.env.PORT || 2000;
 const express = require('express');
 const app = express();
 const cors = require('cors');
+const bearerToken = require('express-bearer-token');
 
 app.use(cors());
 app.use(express.json());
+app.use(bearerToken());
 
 app.get('/', (req, res) => {
     res.status(200).send('<h1>WELCOME TO API</h1>')

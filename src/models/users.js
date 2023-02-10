@@ -23,11 +23,15 @@ module.exports = (sequelize, DataTypes) => {
     occupation: DataTypes.STRING,
     role: DataTypes.STRING,
     currency: DataTypes.STRING,
-    status: DataTypes.STRING,
-    attempt: DataTypes.INTEGER
+    attempt: DataTypes.INTEGER,
+    statusId: DataTypes.INTEGER
   }, {
     sequelize,
     modelName: 'users'
   });
+
+  users.associate = (models) => {
+    users.belongsTo(models.status, { foreignKey: 'statusId' })
+  };
   return users;
 };
