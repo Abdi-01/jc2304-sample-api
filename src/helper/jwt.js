@@ -14,7 +14,7 @@ module.exports = {
                 })
             }
 
-            req.decript = decript;
+            req.decript = decript; // menyisipkan hasil terjemahan token
             next();
         });
     }

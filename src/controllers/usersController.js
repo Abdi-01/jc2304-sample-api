@@ -3,6 +3,7 @@ const model = require('../models');
 const sequelize = require('sequelize');
 const bcrypt = require('bcrypt');
 const { createToken } = require('../helper/jwt');
+const transporter = require('../helper/nodemailer');
 
 let salt = bcrypt.genSaltSync(10);
 
@@ -26,24 +27,32 @@ module.exports = {
                 if (req.body.password == req.body.confirmationPassword) {
                     // 3. Memeriksa panjang password minimal 9
                     //   - Jika kurang dari 9 maka registrasi tidak lanjut
-                    if (req.body.password.length > 8) {
-                        // 4. Jika semua persyaratan terpenuhi maka registrasi jalan
-                        delete req.body.confirmationPassword;
-                        console.log('Check data before create :', req.body);
-                        req.body.password = bcrypt.hashSync(req.body.password, salt);
-                        console.log('Check data after hash password :', req.body);
-                        let regis = await users.create(req.body);
-                        console.log(regis);
-                        res.status(201).send({
-                            success: true,
-                            data: regis
-                        })
-                    } else {
-                        res.status(400).send({
-                            success: false,
-                            message: 'Password to short'
-                        })
-                    }
+                    delete req.body.confirmationPassword;
+                    console.log('Check data before create :', req.body);
+                    req.body.password = bcrypt.hashSync(req.body.password, salt);
+                    console.log('Check data after hash password :', req.body);
+                    let regis = await users.create(req.body);
+                    console.log(regis);
+
+                    let token = createToken({
+                        id: regis.dataValues.id,
+                        email: regis.dataValues.email
+                    }, '1h');
+
+                    // Mengirimkan email verifikasi
+                    await transporter.sendMail({
+                        from: 'Tracker admin',
+                        to: req.body.email,
+                        subject: 'Verifikasi Akun',
+                        html: `<div>
+                        <h3>Click link below</h3>
+                        <a href="http://localhost:3000/verification/${token}">Verifie</a>
+                        </div>`
+                    })
+                    res.status(201).send({
+                        success: true,
+                        data: regis
+                    });
                 } else {
                     res.status(400).send({
                         success: false,
@@ -148,6 +157,24 @@ module.exports = {
                 currency, role, status, token
             })
         } catch (error) {
+            next(error);
+        }
+    },
+    verify: async (req, res, next) => {
+        // Untuk memperbarui status user berdasarkan penerjemahan token
+        // unverified (1) --> verify (2)
+        try {
+            console.log("Data from read token : ", req.decript);
+            await users.update({
+                statusId: 2
+            }, { where: { id: req.decript.id } });
+
+            res.status(200).send({
+                success:true,
+                message:'Your Account is Verified'
+            })
+        } catch (error) {
+            console.log(error);
             next(error);
         }
     }
