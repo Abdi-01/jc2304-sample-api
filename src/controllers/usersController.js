@@ -170,8 +170,26 @@ module.exports = {
             }, { where: { id: req.decript.id } });
 
             res.status(200).send({
-                success:true,
-                message:'Your Account is Verified'
+                success: true,
+                message: 'Your Account is Verified'
+            })
+        } catch (error) {
+            console.log(error);
+            next(error);
+        }
+    },
+    updateProfile: async (req, res, next) => {
+        try {
+            console.log('Cek file data req :', req.files);
+            await users.update({
+                imgProfile: `/imgProfile/${req.files[0].filename}`
+            }, {
+                where: { id: 7 }
+            })
+
+            res.status(200).send({
+                success: true,
+                message: 'Profile picture changed 😁'
             })
         } catch (error) {
             console.log(error);

@@ -10,6 +10,8 @@ app.use(cors());
 app.use(express.json());
 app.use(bearerToken());
 
+app.use(express.static('src/public'));
+
 app.get('/', (req, res) => {
     res.status(200).send('<h1>WELCOME TO API</h1>')
 });
