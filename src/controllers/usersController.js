@@ -9,6 +9,7 @@ let salt = bcrypt.genSaltSync(10);
 
 module.exports = {
     register: async (req, res, next) => {
+        const ormTransaction = await model.sequelize.transaction()
         try {
             // 1. Memeriksa apakah email atau username sudah pernah terdaftar
             //   - Jika sudah pernah terdaftar maka registrasi tidak lanjut
@@ -31,7 +32,7 @@ module.exports = {
                     console.log('Check data before create :', req.body);
                     req.body.password = bcrypt.hashSync(req.body.password, salt);
                     console.log('Check data after hash password :', req.body);
-                    let regis = await users.create(req.body);
+                    let regis = await users.create(req.body, { transaction: ormTransaction });
                     console.log(regis);
 
                     let token = createToken({
@@ -42,13 +43,14 @@ module.exports = {
                     // Mengirimkan email verifikasi
                     await transporter.sendMail({
                         from: 'Tracker admin',
-                        to: req.body.email,
+                        to: req.body.mail,
                         subject: 'Verifikasi Akun',
                         html: `<div>
                         <h3>Click link below</h3>
                         <a href="http://localhost:3000/verification/${token}">Verifie</a>
                         </div>`
                     })
+                    await ormTransaction.commit();
                     res.status(201).send({
                         success: true,
                         data: regis
@@ -66,6 +68,7 @@ module.exports = {
                 })
             }
         } catch (error) {
+            await ormTransaction.rollback();
             console.log(error);
             next(error);
         }
