@@ -4,7 +4,7 @@ const sequelize = require('sequelize');
 const bcrypt = require('bcrypt');
 const { createToken } = require('../helper/jwt');
 const transporter = require('../helper/nodemailer');
-
+const fs = require('fs');
 let salt = bcrypt.genSaltSync(10);
 
 module.exports = {
@@ -181,18 +181,31 @@ module.exports = {
     updateProfile: async (req, res, next) => {
         try {
             console.log('Cek file data req :', req.files);
+            // 1. Mengambil data profile yang lama
+            let get = await users.findAll({
+                where: {
+                    id: req.decript.id
+                },
+                attributes: ['imgProfile']
+            });
+            // 2. Menghapus gambar yang lama berdasarkan data profile sebelumnya
+            if (fs.existsSync(`./src/public${get[0].dataValues.imgProfile}`)) {
+                fs.unlinkSync(`./src/public${get[0].dataValues.imgProfile}`);
+            }
+            // 3. Memperbarui dengan gambar profile yang baru
             await users.update({
                 imgProfile: `/imgProfile/${req.files[0].filename}`
             }, {
-                where: { id: 7 }
+                where: { id: req.decript.id }
             })
 
             res.status(200).send({
                 success: true,
                 message: 'Profile picture changed 😁'
-            })
+            });
         } catch (error) {
             console.log(error);
+            fs.unlinkSync(`./src/public/imgProfile/${req.files[0].filename}`);
             next(error);
         }
     }

@@ -10,6 +10,7 @@ route.post('/auth', checkUser, login);
 route.get('/keeplogin', readToken, keepLogin);
 route.patch('/verify', readToken, verify);
 route.patch('/profile',
+    readToken,
     uploader('/imgProfile', 'PRF').array('images', 1),
     updateProfile);
 
